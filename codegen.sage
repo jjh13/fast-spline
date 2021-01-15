@@ -74,7 +74,7 @@ class EvalCodeGen:
         self.use_linear_fetch   = False
 
         #@ Which type of memory fetches to use
-        self.lookup_type        = "COSET" if self.coset_decomposition else "ABSTRACT" # ABSTRACT, COSET, TEX, TEX_LIN
+        self.lookup_type        = "ABSTRACT" # ABSTRACT, COSET, TEX, TEX_LIN
 
         #@ Whether or not to generate code with branching behaviour
         # this is only beneficial on the GPU
