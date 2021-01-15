@@ -545,13 +545,13 @@ class SplineSpace:
         planes = planes.keys()
 
         for n in planes:
-            P = matrix.identity(self._s) - 2*matrix(n).transpose()*matrix(n)
+            P = matrix(AA, matrix.identity(self._s) - 2*matrix(n).transpose()*matrix(n))
 
             if P in self._symmetry:
                 self.tick('✔')
                 continue
 
-            supp_t = Polyhedron(vertices=[P*vector(_)  for _ in supp.vertices()])
+            supp_t = Polyhedron(vertices=[P*vector(_, AA)  for _ in supp.vertices()])
 
             if supp == supp_t:
                 self._symmetry += [P]

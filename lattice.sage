@@ -35,7 +35,9 @@ class IntegerLattice:
         matrix. This corresponds to L in part I of the 
         paper.
         """
-
+        if isinstance(generating_matrix, str):
+            generating_matrix = lattice_from_str(generating_matrix)
+            
         # Check the base field to ensure that we're coming 
         # from Z.
         if generating_matrix.base_ring() != ZZ:
