@@ -23,7 +23,7 @@ then this repository is for you.
   ```sudo apt-get install llvm``` this may change based on your distribution.
 
 
-## Getting Started
+## Running the Code
 You can choose to get started in two ways. Using a Jupyter notebook is more user friendly, but can become somewhat 
 cumbersome when you're trying to automate tasks. To solve that issue, we've also provided a simple command line utility.
 
@@ -39,18 +39,28 @@ the code, you'll want to check out the ```2D Examples```, ```3D Examples``` and
 To automate testing, we've also provided a simple command line utility ``fastspline.sage``. 
 Before running this command, first run ``sage -m pip install llvmlite``. This will ensure that
 Sage has access to the llvmlite library. Next, run the command
-``sage fastspline.sage -h`` to see details on how to generate code for splines
+``sage fastspline.sage -h`` to see details on how to generate code for splines.
+
+##### Example
 
 
 ## Reproducing Results
-To reproduce the results in the paper, first run the command ``make codegen -j12``. This will generate all the code for 
+To reproduce the results in the paper, first run the command ``make codegen -j[n]``. This will generate all the code for 
 all the test cases in the paper.
 
 ## Roadmap
-- Modularize:
-- Remove dependencies:
-- BB Form
-- Remove Cruft
-- Remove Sage:
+While this codebase is relatively general, it has a number of issues that still need to be addressed before 
+- Modularize: The code needs to be broken down into smaller modules. Currently there are a handful of monolithic files that perform the analyis and code generation. I'd like to break these down into smaller, testable components.
+- Remove dependencies: SageMath is a huge software suite with many dependencies (that changes quite often). Eventually I want to remove this dependency (and rewrite everything in a more performant language).
+- BB Form: We need to eventually provide and evaluate generating code for the BB-form. This requires a bit of theoretical work.
+- Remove Cruft: There's a lot of left over code from earlier stages of prototyping, which needs to be removed.
 
 ## License and Citation 
+This project is licensed under the MIT licence (see LICENSE). In that sense, it is completely free (as in beer). However if you use this in your paper/project please cite
+
+```
+@InProceedings{Horacsek2022,
+title = {FastSpline: Automatic Generation of Interpolants for Lattice Samplings},
+author = {Joshua Horacsek, Usman Alim},
+}
+```
