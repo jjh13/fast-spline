@@ -24,14 +24,15 @@ struct _lattice_info {
 };
 
 
+typedef float float4 __attribute__ ((vector_size (16)));
 
 extern "C" {
 #if DIMENSION == 2
-extern float __reconstruct__(float x, float y, _lattice_info *);
+extern float4 __reconstruct__(float4 x, float4 y, _lattice_info *);
 #elif DIMENSION == 3 && !defined(TEST_TRILINEAR)
-extern float __reconstruct__(float x, float y, float z, _lattice_info *);
+extern float4 __reconstruct__(float4 x, float4 y, float4 z, _lattice_info *);
 #elif DIMENSION == 4
-extern float __reconstruct__(float x, float y, float z, float w, _lattice_info *);
+extern float4 __reconstruct__(float4 x, float4 y, float4 z, float4 w, _lattice_info *);
 #endif
 }
 
@@ -54,5 +55,13 @@ int main(int argc, char const *argv[]) {
     _coset_info ci[2] = {{bounds, coset0}, {bounds, coset1}};
     _lattice_info li{1, 3, &ci[0]};
 
-    printf("%f\n", __reconstruct__(10., 9.5, 9.5, &li));
+    float4 x = {10.0, 9.5, 9.25, 9.0};
+    float4 y = {10.0, 9.25, 9.25, 9.0};
+    float4 z = {10.0, 9.5, 9.25, 9.0};
+    float4 res =  __reconstruct__(x, y, z, &li);
+
+    printf("%f\n", res[0]);
+    printf("%f\n", res[1]);
+    printf("%f\n", res[2]);
+    printf("%f\n", res[3]);
 }

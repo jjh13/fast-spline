@@ -14,7 +14,7 @@
 #include <curand.h>
 #include <curand_kernel.h>
 
-#include "options.h"
+#define LIN_FETCH true
 
 #ifndef _VOLUMERENDER_KERNEL_CU_
 #define _VOLUMERENDER_KERNEL_CU_
@@ -24,6 +24,15 @@
 
 typedef unsigned int  uint;
 typedef unsigned char uchar;
+
+
+#if defined(LATTICE_cc) || defined(LATTICE_CC)
+    #define CC_LATTICE
+#elif defined(LATTICE_bcc) || defined(LATTICE_BCC)
+    #define BCC_LATTICE
+#elif defined(LATTICE_fcc) || defined(LATTICE_FCC)
+    #define FCC_LATTICE
+#endif
 
 
 cudaArray *d_volumeArray  = 0;
@@ -196,6 +205,9 @@ d_render(uint *d_output, uint imageW, uint imageH,
         // read from 3D texture
         // remap position to [0, 1] coordinates
         #ifdef CC_LATTICE
+        const float scale = .25;
+//        float sample = tex3D<float>(tex, scale*32.*(pos.x*0.45 + 0.5), scale*32.*(pos.y*0.45 + 0.5), scale*32.*(pos.z*0.45 + 0.5));
+
         float sample = reconstruct_cc(
             32.*(pos.x*0.45 + 0.5), 32.*(pos.y*0.45 + 0.5), 32.*(pos.z*0.45 + 0.5), tex); //  tex3D<float>(tex, pos.x*0.5f+0.5f, pos.y*0.5f+0.5f, pos.z*0.5f+0.5f);
          #endif
@@ -467,7 +479,7 @@ __global__ void d_test(
     int idx = threadIdx.x + blockIdx.x * blockDim.x;
     curandState state;
     curand_init(100, idx, 0, &state);
-\
+
     double local = 0;
     for(int i = 0; i < 10000; i++) {
         x =  curand_uniform(&state);

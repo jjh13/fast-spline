@@ -1,45 +1,65 @@
 #!/usr/bin/env python
-
-
 """
 
  
 """
-
-
-class SubRegionTransform:
-    def __init__(self):
-        self._translate = None
-        self._rotate    = None
-
-
-    def invert_transform(self):
-        pass
-
+import os
 
 
 class SubRegion:
     def __init__(self, region, splinespace):
 
+        # Keep track of the x (sage)-variables the
         self._xv = splinespace._xvars
 
-        # geometric region of the sub-region
-        self._region     = region
+        # Polyhedron bounding region
+        self._region = region
 
         # Polynomial in terms of (x_0, x_1, ..., x_{n-1}, c_0, ..., c_k)
         self._polynomial = 0
-
         self._parent_spline = splinespace
 
         # Contains the list of (lattice site offset, polynomial)
         self._weighted_sum_terms = {}
-
         self._factored_terms = {}
 
         # Index into the re
         self._ref_region = None
         self._transform = None
         self._coset_partition = None
+
+    def get_ref_region(self):
+        if self._ref_region is None:
+            raise ValueError("Symmetry as not been analysed!")
+        return self._ref_region
+
+    def get_transform(self):
+        if self._transform is None:
+            raise ValueError("Symmetry as not been analysed!")
+        return self._transform
+
+    def get_lattice_sites(self):
+        return self._weighted_sum_terms.keys()
+
+    def get_polynomial(self, ls):
+        return self._weighted_sum_terms[ls]
+
+    def save(self, path):
+        import pathlib
+        pathlib.Path(path).mkdir(parents=True, exist_ok=True)
+
+        save(
+            (self._region, self._polynomial, self._weighted_sum_terms, self._factored_terms, self._coset_partition, self._coverings),
+            path
+        )
+
+    def load(self, path):
+        try:
+            self._region, self._polynomial, self._weighted_sum_terms, self._factored_terms, self._coset_partition, self._coverings = load(path)
+        except:
+            return False
+        return True
+        # raise ValueError("??")
 
     def partition_into_cosets(self, G, coset_vectors):
         cosets = [[] for _ in range(len(coset_vectors))]
@@ -89,6 +109,8 @@ class SubRegion:
         optimal linear lookup pattern, not strictly true,
         but can be changed in the future
         """
+        if not hasattr(self, "_coverings"):
+            self._coverings = self.cover_lookups(False)
         v = []
         for coset_idx, covering in enumerate(self._coverings):
             for chunk in covering:

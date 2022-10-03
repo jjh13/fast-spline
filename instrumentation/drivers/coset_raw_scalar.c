@@ -12,16 +12,34 @@
 
 #define DIMENSION 3
 
+struct _coset_info {
+    uint32_t *bounds;
+    float *buffer;
+};
+
+struct _lattice_info {
+    uint32_t coset_count;
+    uint32_t dimension;
+    _coset_info *cosets;
+    uint32_t *shift_table;
+};
+
+
+
 extern "C" {
 #if DIMENSION == 2
-extern float __reconstruct__(float x, float y, float (*lkup)(int,int));
+extern float __reconstruct__(float x, float y, _lattice_info *);
 #elif DIMENSION == 3 && !defined(TEST_TRILINEAR)
-extern float __reconstruct__(float x, float y, float z, float (*lkup)(int,int,int));
+extern float __reconstruct__(float x, float y, float z, _lattice_info *);
 #elif DIMENSION == 4
-extern float __reconstruct__(float x, float y, float z, float w, float (*lkup)(int,int,int,int));
+extern float __reconstruct__(float x, float y, float z, float w, _lattice_info *);
 #endif
 }
 
+void __compute_shift_table__(_lattice_info *) {
+
+    // For each lattice_site
+}
 
 float lattice_accessor_3d(int x, int y, int z) {
     if(x == y && y == z && x == 10)
@@ -31,6 +49,15 @@ float lattice_accessor_3d(int x, int y, int z) {
 
 
 int main(int argc, char const *argv[]) {
-    //
-    printf("%f\n", __reconstruct__(10., 9.5, 9.5, lattice_accessor_3d));
+    float *coset0 = (float *)calloc(100*100*100, 4);
+    float *coset1 = (float *)calloc(100*100*100, 4);
+
+    coset0[(10*100 + 10)*100 + 10] = 1.0;
+
+    // Build simple coset structure
+    uint32_t bounds[3] = {100,100,100};
+    _coset_info ci[2] = {{bounds, coset0}, {bounds, coset1}};
+    _lattice_info li{1, 3, &ci[0]};
+
+    printf("%f\n", __reconstruct__(10., 9.5, 9.5, &li));
 }

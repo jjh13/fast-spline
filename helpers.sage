@@ -275,7 +275,7 @@ def lattice_sites_in(polyhedron, lattice_f = None):
     # Get lattice sites that touch the support
     lattice = [x for x in
         product(*[range(nint(min(list(v)[i])), nint(max(list(v)[i]))+1 )
-        for i in xrange(s)])
+        for i in range(s)])
         if vector(x) in polyhedron and lattice_f(x)
     ]
     return lattice
@@ -370,3 +370,440 @@ def _bw(integer):
     if r <= 32:
         return 32
     return 64
+
+
+def enum_8_groups_3d(sf_s, G):
+    cubes = []
+    cond1 = [
+        [[(1, 1, 0), (0, 0, 1)], 1],
+        [[(1, 1, 0), (1, 0, 1)], 1],
+        [[(1, 1, 0), (0, 1, 1)], 1],
+        [[(0, 0, 0), (1, 1, 1)], -1],
+        [[(1, 0, 0), (1, 1, 1)], -1],
+        [[(0, 1, 0), (1, 1, 1)], -1],
+    ]
+    cond2 = [
+        [[(0, 1, 0), (1, 0, 1)], 1],
+        [[(1, 1, 0), (1, 0, 1)], 1],
+        [[(1, 0, 1), (0, 1, 1)], 1],
+        [[(0, 0, 0), (1, 1, 1)], -1],
+        [[(1, 0, 0), (1, 1, 1)], -1],
+        [[(0, 0, 1), (1, 1, 1)], -1],
+    ]
+    cond3 = [
+        [[(1, 0, 0), (0, 1, 1)], 1],
+        [[(1, 1, 0), (0, 1, 1)], 1],
+        [[(1, 0, 1), (0, 1, 1)], 1],
+        [[(0, 0, 0), (1, 1, 1)], -1],
+        [[(0, 1, 0), (1, 1, 1)], -1],
+        [[(0, 0, 1), (1, 1, 1)], -1],
+    ]
+    cond4 = [
+        [[(1, 0, 0), (0, 1, 0)], -1],
+        [[(0, 0, 0), (1, 1, 0)], 1],
+        [[(1, 1, 0), (0, 0, 1)], 1],
+        [[(0, 1, 0), (1, 0, 1)], -1],
+        [[(1, 0, 0), (0, 1, 1)], -1],
+        [[(1, 0, 1), (0, 1, 1)], -1],
+        [[(0, 0, 0), (1, 1, 1)], 1],
+        [[(0, 0, 1), (1, 1, 1)], 1],
+    ]
+    cond5 = [
+        [[(1, 0, 0), (0, 0, 1)], -1],
+        [[(1, 1, 0), (0, 0, 1)], -1],
+        [[(0, 0, 0), (1, 0, 1)], 1],
+        [[(0, 1, 0), (1, 0, 1)], 1],
+        [[(1, 0, 0), (0, 1, 1)], -1],
+        [[(1, 1, 0), (0, 1, 1)], -1],
+        [[(0, 0, 0), (1, 1, 1)], 1],
+        [[(0, 1, 0), (1, 1, 1)], 1],
+    ]
+    cond6 = [
+        [[(0, 1, 0), (0, 0, 1)], -1],
+        [[(1, 1, 0), (0, 0, 1)], -1],
+        [[(0, 1, 0), (1, 0, 1)], -1],
+        [[(1, 1, 0), (1, 0, 1)], -1],
+        [[(0, 0, 0), (0, 1, 1)], 1],
+        [[(1, 0, 0), (0, 1, 1)], 1],
+        [[(0, 0, 0), (1, 1, 1)], 1],
+        [[(1, 0, 0), (1, 1, 1)], 1],
+    ]
+    cond7 = [
+        [[(1, 0, 0), (0, 1, 0), (0, 0, 1)], 1],
+        [[(1, 0, 0), (1, 1, 0), (0, 0, 1)], 1],
+        [[(0, 1, 0), (1, 1, 0), (0, 0, 1)], 1],
+        [[(1, 1, 0), (1, 1, 0), (0, 0, 1)], 1],
+        [[(1, 0, 0), (0, 1, 0), (1, 0, 1)], 1],
+        [[(1, 0, 0), (1, 1, 0), (1, 0, 1)], 1],
+        [[(0, 1, 0), (1, 1, 0), (1, 0, 1)], 1],
+        [[(1, 1, 0), (1, 1, 0), (1, 0, 1)], 1],
+        [[(0, 1, 0), (0, 0, 1), (1, 0, 1)], 1],
+        [[(1, 1, 0), (0, 0, 1), (1, 0, 1)], 1],
+        [[(0, 1, 0), (1, 0, 1), (1, 0, 1)], 1],
+        [[(1, 1, 0), (1, 0, 1), (1, 0, 1)], 1],
+        [[(1, 0, 0), (0, 1, 0), (0, 1, 1)], 1],
+        [[(1, 0, 0), (1, 1, 0), (0, 1, 1)], 1],
+        [[(0, 1, 0), (1, 1, 0), (0, 1, 1)], 1],
+        [[(1, 1, 0), (1, 1, 0), (0, 1, 1)], 1],
+        [[(1, 0, 0), (0, 0, 1), (0, 1, 1)], 1],
+        [[(1, 1, 0), (0, 0, 1), (0, 1, 1)], 1],
+        [[(1, 0, 0), (1, 0, 1), (0, 1, 1)], 1],
+        [[(0, 1, 0), (1, 0, 1), (0, 1, 1)], 1],
+        [[(1, 1, 0), (1, 0, 1), (0, 1, 1)], 2],
+        [[(0, 0, 1), (1, 0, 1), (0, 1, 1)], 1],
+        [[(1, 0, 1), (1, 0, 1), (0, 1, 1)], 1],
+        [[(1, 0, 0), (0, 1, 1), (0, 1, 1)], 1],
+        [[(1, 1, 0), (0, 1, 1), (0, 1, 1)], 1],
+        [[(1, 0, 1), (0, 1, 1), (0, 1, 1)], 1],
+        [[(0, 0, 0), (0, 0, 0), (1, 1, 1)], -1],
+        [[(0, 0, 0), (1, 0, 0), (1, 1, 1)], -2],
+        [[(1, 0, 0), (1, 0, 0), (1, 1, 1)], -1],
+        [[(0, 0, 0), (0, 1, 0), (1, 1, 1)], -2],
+        [[(1, 0, 0), (0, 1, 0), (1, 1, 1)], -1],
+        [[(0, 1, 0), (0, 1, 0), (1, 1, 1)], -1],
+        [[(0, 0, 0), (1, 1, 0), (1, 1, 1)], -2],
+        [[(1, 0, 0), (1, 1, 0), (1, 1, 1)], -1],
+        [[(0, 1, 0), (1, 1, 0), (1, 1, 1)], -1],
+        [[(0, 0, 0), (0, 0, 1), (1, 1, 1)], -2],
+        [[(1, 0, 0), (0, 0, 1), (1, 1, 1)], -1],
+        [[(0, 1, 0), (0, 0, 1), (1, 1, 1)], -1],
+        [[(0, 0, 1), (0, 0, 1), (1, 1, 1)], -1],
+        [[(0, 0, 0), (1, 0, 1), (1, 1, 1)], -2],
+        [[(1, 0, 0), (1, 0, 1), (1, 1, 1)], -1],
+        [[(1, 1, 0), (1, 0, 1), (1, 1, 1)], 1],
+        [[(0, 0, 1), (1, 0, 1), (1, 1, 1)], -1],
+        [[(0, 0, 0), (0, 1, 1), (1, 1, 1)], -2],
+        [[(0, 1, 0), (0, 1, 1), (1, 1, 1)], -1],
+        [[(1, 1, 0), (0, 1, 1), (1, 1, 1)], 1],
+        [[(0, 0, 1), (0, 1, 1), (1, 1, 1)], -1],
+        [[(1, 0, 1), (0, 1, 1), (1, 1, 1)], 1],
+        [[(0, 0, 0), (1, 1, 1), (1, 1, 1)], -2],
+        [[(1, 0, 0), (1, 1, 1), (1, 1, 1)], -1],
+        [[(0, 1, 0), (1, 1, 1), (1, 1, 1)], -1],
+        [[(0, 0, 1), (1, 1, 1), (1, 1, 1)], -1]
+    ]
+
+    for site in sf_s:
+        # First we check to see if each
+        cube = [tuple(G * vector(_)) for _ in product(*([[0, 1]] * 3))]
+        if any([tuple(vector(site) + vector(v)) not in sf_s for v in cube]):
+            continue
+        satisfies = True
+
+        for c in [cond1, cond2, cond3, cond4, cond5, cond6, cond7]:
+            t = 0
+            for clist, w in c:
+                clist = [tuple(vector(site) + G * vector(_)) for _ in clist]
+                t += w * prod([sf_s[_] for _ in clist])
+            if t.expand() != 0:
+                satisfies = False
+                break
+
+        if satisfies:
+            cubes += [[tuple(vector(site) + vector(_)) for _ in cube]]
+
+    return cubes
+
+
+def enum_4_groups_3d(sf_s, G):
+    squares = []
+    for site in sf_s:
+
+        for e in range(3):
+            # Create a square
+            square = [[0, 0], [1, 1], [1, 0], [0, 1]]
+            for s in square:
+                s.insert(e, 0)
+            square = [tuple(G * vector(_) + vector(site)) for _ in square]
+
+            if any([v not in sf_s for v in square]):
+                continue
+
+            if (sf_s[square[0]] * sf_s[square[1]] - sf_s[square[2]] * sf_s[square[3]]).expand() == 0:
+                squares += [[tuple(vector(_)) for _ in square]]
+
+            # todo: check conditions
+    return squares
+
+
+def enum_2_groups_3d(sf_s, G):
+    pairs = []
+
+    for site in sf_s:
+        site = vector(site)
+        for e in range(3):
+            s2 = vector(site[:]) + G * vector([1 if e == i else 0 for i in range(3)])
+            if tuple(s2) in sf_s:
+                pairs += [[tuple(site), tuple(s2)]]
+    return pairs
+
+
+def enum_1_groups_3d(sf_s, scale):
+    return [[_] for _ in sf_s.keys()]
+
+
+def poly_coeffs(p, cvar_to_site):
+    p = p.expand()
+    term_map = {}
+    for term in p.operands():
+        # Grab the coeff, if we donk out, that's because term was only a coeff
+        try:
+            coeff = term.subs({v: 1 for v in term.variables()})
+        except:
+            coeff = term
+
+        # Grab c
+        c = 0
+        for v in term.variables():
+            if v in cvar_to_site:
+                c = v
+
+        term = term / (c * coeff)
+
+        # Figure out the degree of the term
+        # Constant term
+        if term == 1:
+            index = (0,) * dim_s
+        else:
+            index = tuple([term.degree(var('x_%d' % v)) for v in xrange(dim_s)])
+
+        if index not in term_map:
+            term_map[index] = [
+                0,
+                []
+            ]
+        term_map[index][0] += coeff * c
+        term_map[index][1] += [coeff * c]
+
+    new_poly = 0
+    for d in term_map:
+        x = prod([var('x_%d' % i) ^ deg for i, deg in enumerate(d)])
+        new_poly += term_map[d][0] * x
+
+    return new_poly, term_map
+
+
+def consistent_vars(p, cvar_to_site):
+    pvar_map = {}
+    for k in p:
+        for v in p[k][0].variables():
+            if v not in pvar_map:
+                pvar_map[v] = True
+
+    pvars = []
+    for c in cvar_to_site:
+        if c in pvar_map:
+            pvars += [c]
+
+    return pvars
+
+
+def construct_matrix(p, deg_order, dim_s, c_var_to_site, R=None):
+    """
+       p is a dict with key polynomial degree (in (0,2,3) form), maps to (coeff, c_list)
+       deg_order is a list of degrees (so we have a consistent ordering between matrices)
+
+       returns a matrix whose rows correspond to a degree, and cols correspond to the the
+       weight of a coeff in the linear sum of coeffs
+    """
+    if R is None:
+        R = matrix.identity(dim_s)
+
+    pvars = consistent_vars(p, c_var_to_site)
+    pp = {}
+    try:
+        for i, deg in enumerate(p):
+            sgn = prod([sign(_) ** abs(_) for _ in vector(deg) * R])
+            dnew = tuple([abs(_) for _ in vector(deg) * R])
+            pp[dnew] = sgn * p[deg][0]
+    except:
+        return None
+
+    A = matrix(QQ, len(p), len(pvars))
+    for i, k in enumerate(deg_order):
+        for j, v in enumerate(pvars):
+            A[i, j] = pp[k].coefficient(v)
+    return A
+
+
+def match_coeffs(B, A, q, p, c_var_to_site):
+    pvars = []
+    qvars = []
+
+    # Check for row consistency
+    for (a, b) in zip(A.columns(), B.columns()):
+        if any([c != d for (c, d) in zip(sorted(a), sorted(b))]):
+            Acdf = matrix(CDF, A)
+            Bcdf = matrix(CDF, B)
+
+            _, As, _ = Acdf.SVD()
+            _, Bs, _ = Bcdf.SVD()
+            closeness = (As - Bs).norm()
+            print( "inconsistent cols!", closeness)
+            return None
+
+    Acdf = matrix(CDF, A)
+    Bcdf = matrix(CDF, B)
+
+    _, As, _ = Acdf.SVD()
+    _, Bs, _ = Bcdf.SVD()
+    closeness = (As - Bs).norm()
+
+    if closeness > 1e-10:
+        print("SVD OPT")
+        return None
+    else:
+        print("close?", closeness)
+
+    n = A.nrows()
+    P = matrix(QQ, n, n)
+    K = matrix(QQ, n, n)
+
+    P = recursive_find_fasty(A, B, P, K, n, -1, -1)
+
+    if P is None or A != P * B:
+        return None
+
+    pvars = consistent_vars(p, c_var_to_site)
+    qvars = consistent_vars(q, c_var_to_site)
+
+    return {t: d for (t, d) in zip(vector(pvars) * P, vector(qvars))}
+
+
+def find_P_and_t(packed_info_p, packed_info_q, dim_s, c_var_to_site):
+    # unpack
+    p_shape, pp, pc, c_p = packed_info_p
+    q_shape, pq, qc, c_q = packed_info_q
+
+    __, pvarc = poly_coeffs(pc, c_var_to_site)
+    __, pvar = poly_coeffs(pp, c_var_to_site)
+
+    __, qvarc = poly_coeffs(qc, c_var_to_site)
+    __, qvar = poly_coeffs(pq, c_var_to_site)
+    __, qvar = poly_coeffs(pq, c_var_to_site)
+
+    # Choose a consistent ordering for the coeffs
+    deg_orderc = pvarc.keys()
+    deg_order = pvar.keys()
+
+    # Precompute the B matrix
+    Bc = construct_matrix(pvarc, deg_orderc, dim_s, c_var_to_site).transpose()
+    B = construct_matrix(pvar, deg_order, dim_s, c_var_to_site).transpose()
+
+    t = vector(p_shape.center()) - vector(q_shape.center())
+
+    best_solution = None
+
+    # find a rotation/reflection that works
+    for P in signed_permutation_matrices(dim_s):
+        # Do the change of variables
+        X = vector([var('x_%d' % i) for i in range(dim_s)])
+        subs_x = {a: b for (a, b) in zip(X, P * X)}
+
+        Ac = construct_matrix(qvarc, deg_orderc, P, dim_s, c_var_to_site).transpose()
+        A = construct_matrix(qvar, deg_order, P, dim_s, c_var_to_site).transpose()
+
+        if Ac is None or A is None:
+            print("Something inconsistent")
+
+        if Ac is None and A is None:
+            print("Inconsistent Renaming...")
+            continue
+
+        c_subs = None
+        c_subsc = None
+
+        if A is not None:
+            c_subs = match_coeffs(B, A, pvar, qvar, c_var_to_site)
+
+        if Ac is not None:
+            c_subsc = match_coeffs(Bc, Ac, pvarc, qvarc, c_var_to_site)
+
+        if c_subs is not None:
+            print("Best solution")
+            if pq.subs(subs_x).subs(c_subs).expand() == pp.expand():
+                print("and it's valid...")
+                best_solution = (P, (0,) * dim_s, c_subs)
+
+        elif c_subsc is not None:
+            print("Okay solution")
+            if qc.subs(subs_x).subs(c_subsc).expand() == pc.expand():
+                best_solution = (P, t, c_subsc)
+
+        if not has_negative_element(P) and best_solution is not None:
+            break
+
+    if best_solution is not None:
+        P, t, c_subs = best_solution
+        subs_x = {a: b for (a, b) in zip(X, P * X)}
+        # print
+        # pp.expand()
+        # print
+        # pq.subs(subs_x).subs(c_subs).expand()
+
+    return best_solution
+
+import time
+import copy
+
+def recursive_find_fasty(A, B, P, K, n, i, j, Bmap=None, depth=0):
+    P = copy(P)
+    K = copy(K)
+
+    t0 = time.time()
+    if i >= 0 and j >= 0:
+        if K[i, j] == 0 and P[i, j] != 1:
+            P[i, j] = 1
+            for ii in range(n):
+                K[ii, j] = -1
+                K[i, ii] = -1
+
+        else:
+            return None
+
+    changed = True
+    while changed:
+        changed = False
+        for a, b in zip(A.columns(), B.columns()):
+            for i, p in enumerate(a):
+
+                count = 0
+                jdx = -1
+
+                for j, q in enumerate(b):
+                    if p == q and K[i, j] == 0:
+                        count += 1
+                        if count == 1:
+                            jdx = j
+
+                if count == 1 and jdx >= 0:
+                    if K[i, jdx] == -1 and P[i, jdx] != 1:
+                        print("(%d,%d) violated constraint" % (i, jdx))
+                        return None
+
+                    if P[i, jdx] == 1:
+                        continue
+
+                    changed = True
+                    P[i, jdx] = 1
+                    for ii in range(n):
+                        K[ii, jdx] = -1
+                        K[i, ii] = -1
+
+    if P.rank() < n:
+        for a, b in zip(A.columns(), B.columns()):
+            for i, p in enumerate(a):
+                for j, q in enumerate(b):
+                    if p == q and K[i, j] == 0:
+                        # make sure that this choice is consistent...
+                        if A[i, :] != B[j, :]:
+                            continue
+                        Pq = recursive_find_fasty(A, B, P, K, n, i, j, Bmap, depth + 1)
+                        if Pq is not None:
+                            return Pq
+        return None
+
+    if A != P * B:
+        return None
+
+    return P

@@ -36,8 +36,9 @@ struct _lattice_info {
 };
 
 
+#ifdef TEST_TRILINEAR
 
-float __attribute__ ((noinline)) __reconstruct___(float x, float y, float z, _lattice_info *l) {
+float __attribute__ ((noinline)) __reconstruct__(float x, float y, float z, _lattice_info *l) {
 	float *base_addr = l->cosets[0].buffer;
 
 	// Note this should be floor -- this works fine for positive values of x,y,z
@@ -53,10 +54,6 @@ float __attribute__ ((noinline)) __reconstruct___(float x, float y, float z, _la
 	const uint32_t by = l->cosets[0].bounds[1];
 	const uint32_t bz = l->cosets[0].bounds[2];
 
-    /*k
-    k*bz + j
-    (k*bz + j)*by + i
-*/
 	const uint32_t index = i + by * (j + bz* k); 
 	const float d000 = base_addr[index];
 	const float d001 = base_addr[index + 1];
@@ -71,17 +68,18 @@ float __attribute__ ((noinline)) __reconstruct___(float x, float y, float z, _la
 	
 	const float xm1 = 1. - tx, ym1 = 1. - ty, zm1 = 1. - tz;
 	return  xm1 * ym1 * zm1 * d000 +
-                tx  * ym1 * zm1 * d100 + 
-		xm1 * ty  * zm1 * d010 + 
-		tx  * ty  * zm1 * d110 +
-		xm1 * ym1 * tz  * d001 + 
-		tx  * ym1 * tz  * d101 +
-	        xm1 * ty  * tz  * d011 + 
-		tx  * ty  * tz  * d111;
+            tx  * ym1 * zm1 * d100 +
+            xm1 * ty  * zm1 * d010 +
+            tx  * ty  * zm1 * d110 +
+            xm1 * ym1 * tz  * d001 +
+            tx  * ym1 * tz  * d101 +
+            xm1 * ty  * tz  * d011 +
+            tx  * ty  * tz  * d111;
 	
 
 }
 
+#else
 
 extern "C" {
 #if DIMENSION == 2
@@ -92,7 +90,7 @@ extern float __reconstruct__(float x, float y, float z, _lattice_info *);
 extern float __reconstruct__(float x, float y, float z, float w, _lattice_info *);
 #endif
 }
-
+#endif
 
 struct _coset_info *allocate_3d_coset(unsigned int x, unsigned int y, unsigned int z) {
 	struct _coset_info *coset = (_coset_info *)calloc(sizeof(_coset_info), 1);
@@ -105,7 +103,7 @@ struct _coset_info *allocate_3d_coset(unsigned int x, unsigned int y, unsigned i
 	for(int i = 0; i < x; i++)
 	    for(int j = 0; j < y; j++)
 	        for(int k = 0; k < z; k++) {
-	            coset->buffer[idx++] = 1.0f;
+	            coset->buffer[idx++] = 0.0f;
 	        }
 	return coset;
 }
@@ -114,10 +112,20 @@ struct _lattice_info *allocate_cc(unsigned int x, unsigned int y, unsigned int z
 	struct _coset_info *coset_0 = allocate_3d_coset(x+1, y+1, z+1);
 	struct _lattice_info *lattice_instance = (_lattice_info *)calloc(1, sizeof(_lattice_info));
 
+
+    const int wh = x + 1;
+    const int ww = y + 1;
+    const int wd = z + 1;
+
+    // Set 10,10,10 to 1.0
+    coset_0->buffer[10 + ww * (10 + wd* 10)] = 1.0;
+
 	lattice_instance->coset_count = 1;
 	lattice_instance->dimension = 3;
 	lattice_instance->cosets = (_coset_info *) calloc(1, sizeof(_coset_info));
 	memcpy(&lattice_instance->cosets[0], coset_0, sizeof(_coset_info));
+
+
 	return lattice_instance;
 }
 
@@ -139,6 +147,14 @@ struct _lattice_info *allocate_bcc(unsigned int x, unsigned int y, unsigned int 
 	struct _coset_info *coset_0 = allocate_3d_coset((x/2) + 1, (y/2) + 1, (z/2) + 1);
 	struct _coset_info *coset_1 = allocate_3d_coset((x/2) + extend_x, (y/2) + extend_y, (z/2) + extend_z);
 	struct _lattice_info *lattice_instance = (_lattice_info *)calloc(1, sizeof(_lattice_info));
+
+
+    const int wh = x/2 + 1;
+    const int ww = y/2 + 1;
+    const int wd = z/2 + 1;
+
+    // Set 10,10,10 to 1.0
+    coset_0->buffer[5 + ww * (5 + wd* 5)] = 1.0;
 
 	lattice_instance->coset_count = 2;
 	lattice_instance->dimension = 3;
@@ -163,6 +179,13 @@ struct _lattice_info *allocate_fcc(unsigned int x, unsigned int y, unsigned int 
 	lattice_instance->coset_count = 4;
 	lattice_instance->dimension = 3;
 	lattice_instance->cosets = (_coset_info *) calloc(lattice_instance->coset_count, sizeof(_coset_info));
+
+    const int wh = x/2 + 1;
+    const int ww = y/2 + 1;
+    const int wd = z/2 + 1;
+
+    // Set 10,10,10 to 1.0
+    coset_0->buffer[5 + ww * (5 + wd* 5)] = 1.0;
 
 	memcpy(&lattice_instance->cosets[0], coset_0, sizeof(_coset_info));
 	memcpy(&lattice_instance->cosets[1], coset_1, sizeof(_coset_info));
@@ -191,7 +214,7 @@ struct _lattice_info *allocate_lattice(float scale, int *lattice_bound) {
 	if(scale < 0) *lattice_bound = 202;
 	lattice_instance = allocate_bcc(*lattice_bound, *lattice_bound, *lattice_bound);
 #elif defined(FACE_CENTERED_CUBIC)
-	if(scale <0) *lattice_bound = 161;
+	if(scale <0) *lattice_bound = 100;
 	lattice_instance = allocate_fcc(*lattice_bound, *lattice_bound, *lattice_bound);
 //#elif defined(LATTICE_C4)
 //	lookup_func = _access_c4;
@@ -216,32 +239,38 @@ int main(int argc, char const *argv[]) {
 	int lattice_bound = 0;
     struct _lattice_info *lattice_instance = allocate_lattice(-1, &lattice_bound);
 	cpu_set_t set;
-	
 
-	// Lock this thread to a single core
-	CPU_ZERO(&set);
-	CPU_SET(0, &set);
-	sched_setaffinity(getpid(), sizeof(set), &set);
+    if(argc < 2) {
+        printf("Input to this test bench should include the reconstruction filter width. I.e\n"
+               "./valtest [width]\n");
+        return -1;
+    }
+    float fwidth = atof(argv[1]);
+    printf("[");
+    for(float z = 10.0 - fwidth; z < 10.0 + fwidth; z += (fwidth/50.0) ) {
+        printf("[");
+            for(float y = 10.0 - fwidth; y < 10.0 + fwidth; y += (fwidth/50.0) ) {
+            printf("[");
+        for(float x = 10.0 - fwidth; x < 10.0 + fwidth; x += (fwidth/50.0) ) {
+                float eval =  __reconstruct__(x,y,z, lattice_instance);
+            if(eval < -0.001) {
+                fprintf( stderr, "%f %f %f was negative (%f)!\n",x,y,z, eval);
+            }
+                printf("%f,", eval);
+            }
+            printf("],\n");
+        }
+        printf("],\n");
+
+    }
+    printf("]\n");
+    return 0;
+
 	// Do some burn in
 	float pos[DIMENSION];
 	float noopt = 0, last = 0;
-//
-//	for(int i = 0; i < BURNIN; i++) {
-//        float ret = 0.0;
-//		#pragma unroll
-//		for(int k = 0; k < DIMENSION; k++) { pos[k] = ((float)(lattice_bound))*(float)rand()/(float)(RAND_MAX); }
-//
-//		#if DIMENSION == 2
-//		ret = __reconstruct__(pos[0], pos[1], lattice_instance);
-//		#elif DIMENSION == 3
-//		ret = __reconstruct__(pos[0], pos[1], pos[2], lattice_instance);
-//		#elif DIMENSION == 4
-//		ret = __reconstruct__(pos[0], pos[1], pos[2], pos[3], lattice_instance);
-//		#endif
-//
-//		noopt += ret;
-//	}
 
+    printf("Setup eval pts...\n");
     const int padding = 4;
     std::vector<std::tuple<float, float, float>> eval_points;
     for(int i = 0; i < SAMPLES + BURNIN; i++) {
@@ -252,6 +281,7 @@ int main(int argc, char const *argv[]) {
         });
     }
 
+    printf("Doing eval...\n");
     for(int i = 0; i < SAMPLES/BATCH_SIZE + BURNIN/BATCH_SIZE ; i++) {
         const int offset = i * BATCH_SIZE;
         auto const t0 = std::chrono::steady_clock::now();
@@ -265,16 +295,10 @@ int main(int argc, char const *argv[]) {
             pos[1] = std::get<1>(eval_points[offset+j]);
             pos[2] = std::get<2>(eval_points[offset+j]);
             last =  __reconstruct__(pos[0], pos[1], pos[2], lattice_instance);
-//
-//            const uint32_t bx = lattice_instance->cosets[0].bounds[0];
-//            const uint32_t by = lattice_instance->cosets[0].bounds[1];
-//            const uint32_t bz = lattice_instance->cosets[0].bounds[2];
-//
-//            int ii = (int)pos[0];
-//            int jj = (int)pos[1];
-//            int kk = (int)pos[2];
-//            const uint32_t index = ii + by * (jj + bz* kk);
-//            printf("%f, %f, %f:  %f (%d)\n", pos[0], pos[1], pos[2], last, index);
+            printf("%f ", last);
+            if(last < 0) {
+                fprintf( stderr, "%f %f %f was negative!\n",pos[0], pos[1], pos[2]);
+            }
 
             #elif DIMENSION == 4
             pos[1] = std::get<1>(eval_points[offset+j]);

@@ -5,7 +5,7 @@ Main class that implements part I of the paper. Basically all of the analysis
 happens here, anything that needs a one-time computation is intended to be in 
 part I.
 
-Copyright © 2016, 2020 Joshua Horacsek
+Copyright © 2016, 2020,2022 Joshua Horacsek
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -58,9 +58,9 @@ class SplineSpace:
         if "rho" in kwargs:
             rho = kwargs["rho"]
 
-        rho_shift=None
+        rho_shift = None
         if "rho_shift" in kwargs:
-            rho_shift = kwargs["rho"]
+            rho_shift = kwargs["rho_shift"]
 
         self._allow_reflective = True
         if "enable_reflective" in kwargs:
@@ -109,7 +109,7 @@ class SplineSpace:
         # Construct the lattice objects
         orig_lattice = IntegerLattice(lattice_matrix)
         self._lattice_matrix = lattice_matrix*coset_matrix
-        self._lattice        = IntegerLattice(self._lattice_matrix) 
+        self._lattice = IntegerLattice(self._lattice_matrix)
 
         # Do the coset decomposition
         p = Polyhedron(vertices=self._lattice.get_parallelpiped(), base_ring=AA)
@@ -128,8 +128,8 @@ class SplineSpace:
         Setup the region of evaluation
         """
         self._rho_ppiped = matrix.identity(self._s)
-        self._rho_shift  = vector([0]*self._s) if rho_shift is None else rho_shift
-        self._rho_type   = "PP"
+        self._rho_shift = vector([0]*self._s) if rho_shift is None else rho_shift
+        self._rho_type = "PP"
 
         if isinstance(rho, str):
             if rho.lower() == "indicator":
@@ -297,6 +297,7 @@ class SplineSpace:
         # Determine which lattice shifts contribute to the ROE
         mink = self._roe.minkowski_sum(self._support)
 
+        # Construct all the cartesian points within the support
         pts = [pt for pt in mink.integral_points() if
             self._lattice.is_lattice_site(vector(pt))
         ]
@@ -325,8 +326,8 @@ class SplineSpace:
         if self._rho_type == "PP":
             self._roe = Polyhedron(vertices=build_ppiped(self._rho_ppiped, False)[0])
         elif self._rho_type == "IND":
-            # pass
             self._roe = self._lattice.voronoi_region()
+            print(self._roe.volume())
 
         self._roe = shift_polyhedron(self._roe, self._rho_shift)
         self.log("done!")
@@ -407,7 +408,7 @@ class SplineSpace:
                 self._reflective = False
                 break
 
-        if  self._reflective:
+        if self._reflective:
             self.log("SplineSpace has reflective symmetry!")
         else:
             self.log("SplineSpace doesn't have reflective symmetry :<")
@@ -448,6 +449,9 @@ class SplineSpace:
 
     def get_subregions(self):
         return self._subregions
+
+    def get_ref_subregions(self):
+        return self._ref_subregions
 
     def _analyze_symmetry_box_spline(self, bs):
         self._symmetry = self._check_cache("symmetry")
@@ -638,7 +642,7 @@ class SplineSpace:
     def _subregion_symmetry_analysis(self):
         import itertools
 
-        check = self._check_cache("ref_subregions")
+        check = None #self._check_cache("ref_subregions")
         if check is not None:
             self._ref_subregions = check[0]
             self._subregions = check[1]
@@ -649,7 +653,7 @@ class SplineSpace:
             self._ref_subregions = [self._subregions[0]]
 
             
-            pss = self._check_cache("partial_sym_subregions")
+            pss = None # self._check_cache("partial_sym_subregions")
             ignore = -1
 
             if pss is not None:
@@ -739,25 +743,15 @@ class SplineSpace:
         # Check all pairs of terms in each weighted sum form
         for (i, (ls_a, a_polynomial)), (j, (ls_b, b_polynomial)) in itertools.product(enumerate(A_list), enumerate(B_list)):
             if tuple(Xi*(vector(ls_b) - B_center) + A_center) == ls_a:
-                if (a_polynomial.expand()-b_polynomial.expand()).expand() == 0:
+                test = (a_polynomial.expand() - b_polynomial.expand()).expand()
+                if test == 0:
                     G.add_edge("A_%d" % i, "B_%d" % j)
 
         # Check for a perfect matching
         if int(G.matching(True)) != int(A.number_of_pts_per_reconstruction()):
             return None
 
-        # Check if the transformation is rigid
-        sd = {}
         t = B_center - X*A_center
-        for ls_a,pp_a in A.get_ws_list():
-            sd[tuple(ls_a)] = True
-
-        for ls_b,pp_a in B.get_ws_list():
-            ls_a = X*vector(ls_b) + t
-            if tuple(ls_a) not in sd:
-                return None
-
-        # return the transformation
         return X, t
 
     def _collect_sr_planes(self):
@@ -840,6 +834,23 @@ class SplineSpace:
 
         return self._plist
 
+    def get_modulus(self):
+        return self._sregion_modulus
+
+    def coset_count(self):
+        return len(self._lattice.coset_structure()[1])
+
+    def get_index(self):
+        return self._sregion_index
+
+    def get_plane_list(self):
+        return self._plist
+
+    def get_lattice_hash(self, tf=True):
+        return self._lattice.hash(tf)
+
+    def is_lattice_cartesian(self):
+        return self._lattice_matrix == matrix.identity(self._s)
 
     def _pack_regions(self):
         """
@@ -988,6 +999,9 @@ class SplineSpace:
         self._sregion_modulus = limit
         self._sregion_index = packed_rindex
 
+    def get_unique_subregion_count(self):
+        return self._non_redundant_srgn_cnt
+
     def eval_test(self, x, mmap=None, verbose=False, slow=True):
         x_orig = vector(x)
         if mmap == None:
@@ -1019,16 +1033,22 @@ class SplineSpace:
                     index |= (1 if vector(n)*vector(x) >= -d else 0) << i
 
 
+                print(index)
                 index %= self._sregion_modulus
 
                 # Use that index to reference the correct sub_region
                 subregion = self._sregion_index[index]
 
+                print(subregion)
                 # grab the proper region
                 subregion = self._subregions[subregion]
+                if x not in subregion._region:
+                    print("uh.dang")
+
             else:
                 for idx, subregion in enumerate(self._subregions):
                     if x in subregion._region:
+                        print(idx)
                         break
 
                 # if verbose:

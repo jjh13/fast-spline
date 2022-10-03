@@ -59,10 +59,18 @@ typedef unsigned char uchar;
 
 #define MAX_EPSILON_ERROR 5.00f
 #define THRESHOLD         0.30f
-#include "options.h"
+//#include "options.h"
 
-// #define CC_LATTICE
-// #define TEST_ONE_CELL
+#if defined(LATTICE_cc) || defined(LATTICE_CC)
+    #define CC_LATTICE
+#elif defined(LATTICE_bcc) || defined(LATTICE_BCC)
+    #define BCC_LATTICE
+#elif defined(LATTICE_fcc) || defined(LATTICE_FCC)
+    #define FCC_LATTICE
+#endif
+
+
+#define TEST_ONE_CELL
 
 // Define the files that are to be save and the reference images for validation
 const char *sOriginal[] =
@@ -393,10 +401,10 @@ void render()
         density = 0.005;
         double dAvgTime = sdkGetTimerValue(&timerInternal);
         sdkResetTimer(&timerInternal);
-        printf("%f\n", dAvgTime);
+        fprintf(stderr, "%f, ", dAvgTime);
         viewRotation.x  += 0.5;
         viewRotation.y  += 0.7;
-        if(frame_index == 115) {
+        if(frame_index == 1000) {
             exit_program = true;
         }
     }
@@ -550,7 +558,7 @@ void keyboard(unsigned char key, int x, int y)
             break;
     }
 
-    // printf("density = %.2f, brightness = %.2f, transferOffset = %.2f, transferScale = %.2f\n", density, brightness, transferOffset, transferScale);
+     printf("density = %.2f, brightness = %.2f, transferOffset = %.2f, transferScale = %.2f\n", density, brightness, transferOffset, transferScale);
     glutPostRedisplay();
 }
 
@@ -860,8 +868,8 @@ main(int argc, char **argv)
 
     if (path == 0)
     {
-        printf("Error finding file '%s'\n", volumeFilename);
-        exit(EXIT_FAILURE);
+//        printf("Error finding file '%s'\n", volumeFilename);
+//        exit(EXIT_FAILURE);
     }
 
 
@@ -914,13 +922,13 @@ main(int argc, char **argv)
 #endif
     dim3 _blockSize(32*8);
     dim3 _gridSize(1024*32/8);
-
-    random_test(_gridSize, _blockSize);
-    // initCuda(h_volume, h_volume, h_volume, h_volume, volumeSize);
-    // free(h_volume);
-
-
-    exit(-1);
+//
+//    random_test(_gridSize, _blockSize);
+//    // initCuda(h_volume, h_volume, h_volume, h_volume, volumeSize);
+//    // free(h_volume);
+//
+//
+//    exit(-1);
 
     sdkCreateTimer(&timer);
     sdkCreateTimer(&timerInternal);

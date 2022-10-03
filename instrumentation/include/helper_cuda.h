@@ -1,28 +1,12 @@
-/* Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+/**
+ * Copyright 1993-2017 NVIDIA Corporation.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *  * Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *  * Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *  * Neither the name of NVIDIA CORPORATION nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ * Please refer to the NVIDIA end user license agreement (EULA) associated
+ * with this source code for terms and conditions that govern your use of
+ * this software. Any use, reproduction, disclosure, or distribution of
+ * this software and related documentation outside the terms of the EULA
+ * is strictly prohibited.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ``AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
- * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -38,8 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <cuda_runtime.h>
-#include "helper_string.h"
+#include <helper_string.h>
 
 #ifndef EXIT_WAIVED
 #define EXIT_WAIVED 2
@@ -664,9 +647,6 @@ inline int _ConvertSMVer2Cores(int major, int minor) {
       {0x70,  64},
       {0x72,  64},
       {0x75,  64},
-      {0x80,  64},
-      {0x86, 128},
-      {0x87, 128},
       {-1, -1}};
 
   int index = 0;
@@ -711,8 +691,6 @@ inline const char* _ConvertSMVer2ArchName(int major, int minor) {
       {0x70, "Volta"},
       {0x72, "Xavier"},
       {0x75, "Turing"},
-      {0x80, "Ampere"},
-      {0x86, "Ampere"},
       {-1, "Graphics Device"}};
 
   int index = 0;
@@ -823,19 +801,7 @@ inline int gpuGetMaxGflopsDeviceId() {
       }
       int multiProcessorCount = 0, clockRate = 0;
       checkCudaErrors(cudaDeviceGetAttribute(&multiProcessorCount, cudaDevAttrMultiProcessorCount, current_device));
-      cudaError_t result = cudaDeviceGetAttribute(&clockRate, cudaDevAttrClockRate, current_device);
-      if (result != cudaSuccess) {
-        // If cudaDevAttrClockRate attribute is not supported we
-        // set clockRate as 1, to consider GPU with most SMs and CUDA Cores.
-        if(result == cudaErrorInvalidValue) {
-          clockRate = 1;
-        }
-        else {
-          fprintf(stderr, "CUDA error at %s:%d code=%d(%s) \n", __FILE__, __LINE__,
-            static_cast<unsigned int>(result), _cudaGetErrorEnum(result));
-          exit(EXIT_FAILURE);
-        }
-      }
+      checkCudaErrors(cudaDeviceGetAttribute(&clockRate, cudaDevAttrClockRate, current_device));
       uint64_t compute_perf = (uint64_t)multiProcessorCount * sm_per_multiproc * clockRate;
 
       if (compute_perf > max_compute_perf) {
@@ -882,7 +848,7 @@ inline int findCudaDevice(int argc, const char **argv) {
     // Otherwise pick the device with highest Gflops/s
     devID = gpuGetMaxGflopsDeviceId();
     checkCudaErrors(cudaSetDevice(devID));
-    int major = 0, minor = 0;
+    int major = 0, minor = 0; 
     checkCudaErrors(cudaDeviceGetAttribute(&major, cudaDevAttrComputeCapabilityMajor, devID));
     checkCudaErrors(cudaDeviceGetAttribute(&minor, cudaDevAttrComputeCapabilityMinor, devID));
     printf("GPU Device %d: \"%s\" with compute capability %d.%d\n\n",
@@ -915,7 +881,7 @@ inline int findIntegratedGPU() {
     if (integrated && (computeMode != cudaComputeModeProhibited)) {
       checkCudaErrors(cudaSetDevice(current_device));
 
-      int major = 0, minor = 0;
+      int major = 0, minor = 0; 
       checkCudaErrors(cudaDeviceGetAttribute(&major, cudaDevAttrComputeCapabilityMajor, current_device));
       checkCudaErrors(cudaDeviceGetAttribute(&minor, cudaDevAttrComputeCapabilityMinor, current_device));
       printf("GPU Device %d: \"%s\" with compute capability %d.%d\n\n",
